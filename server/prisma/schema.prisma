@@ -1,0 +1,92 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgresql://postgres:postgres@localhost:5432/InvestPath?schema=public"
+}
+
+model StockInfo {
+  id             Int     @id @default(autoincrement())
+  name           String  @db.VarChar(255)
+  symbol         String  @db.VarChar(255)
+  
+  sectionId      Int?
+  industryGroupId Int?
+  industryId     Int?
+
+  // section        Section?      @relation(fields: [sectionId], references: [id], name: "StockSection") // 關聯 Section
+  // industryGroup  IndustryGroup? @relation(fields: [industryGroupId], references: [id], name: "StockIndustryGroup") // 關聯 IndustryGroup
+  // industry       Industry?      @relation(fields: [industryId], references: [id], name: "StockIndustry") // 關聯 Industry
+
+  // exchanges      StockExchange[] @relation(name: "StockInfoExchanges") // 與交易所的多對多關係
+
+  
+  @@map("stockInfo")
+}
+
+model Section {
+  id          Int          @id @default(autoincrement())
+  name        String       @db.VarChar(255)
+  
+  // stockInfos  StockInfo[]  @relation(name: "StockSection")
+  // industryGroups IndustryGroup[] @relation(name: "SectionIndustryGroup")
+  
+  @@map("section")
+}
+
+model IndustryGroup {
+  id        Int     @id @default(autoincrement())
+  name      String  @db.VarChar(255)
+  sectionId Int
+  
+  // section   Section  @relation(fields: [sectionId], references: [id], name: "SectionIndustryGroup") // 關聯 Section
+  
+  // stockInfos  StockInfo[]  @relation(name: "StockIndustryGroup")
+  // industries  Industry[]   @relation(name: "IndustryGroupIndustries")
+
+  @@map("industryGroup")
+}
+
+model Industry {
+  id            Int     @id @default(autoincrement())
+  name          String  @db.VarChar(255)
+  industryGroupId Int
+  
+  // industryGroup IndustryGroup @relation(fields: [industryGroupId], references: [id], name: "IndustryGroupIndustries") // 關聯 IndustryGroup
+
+  // stockInfos StockInfo[] @relation(name: "StockIndustry")
+
+  @@map("industry")
+}
+
+
+model Exchange {
+  id          Int    @id @default(autoincrement())
+  name        String @db.VarChar(255) // 交易所名稱，例如 "NASDAQ", "NYSE"
+  country     String @db.VarChar(255) // 所屬國家，例如 "USA", "Japan"
+  
+  // 與 StockInfo 的關聯
+  // stockInfos  StockExchange[]  @relation(name: "ExchangeStockInfos")
+  
+  @@map("exchange")
+}
+
+model StockExchange {
+  stockInfoId Int
+  exchangeId  Int
+
+  // stockInfo   StockInfo @relation(fields: [stockInfoId], references: [id], name: "StockInfoExchanges")
+  // exchange    Exchange  @relation(fields: [exchangeId], references: [id], name: "ExchangeStockInfos")
+
+  @@id([stockInfoId, exchangeId])  // 複合主鍵，保證唯一性
+  @@map("stockExchange")
+}
+
