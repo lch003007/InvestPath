@@ -18,3 +18,6 @@ export class PrismaService extends PrismaClient implements OnModuleInit,OnModule
 
 
 export type StockInfoFindManyArgs = Prisma.StockInfoFindManyArgs;
+export type StockPriceHistoryFindManyArgs = Prisma.StockPriceHistoryFindManyArgs;
+export type StockInfoUpdateManyArgs = Prisma.StockInfoUpdateManyArgs;
+export type stockPriceHistoryCreateManyArgs = Prisma.StockPriceHistoryCreateManyArgs
