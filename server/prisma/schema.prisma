@@ -109,6 +109,60 @@ model StockPriceHistory {
   close Int
   adjclose Int
 
-  @@index([stockInfoId,date])
+  @@index([stockInfoId,date(SortOrder.desc)])
   @@map("stockPriceHistory")
+}
+
+model DataUpdateHistory{
+  id Int @id @default(autoincrement())
+  tableName String @db.VarChar(255)
+  idColumn String @db.VarChar(255)
+  idValue Int
+  updatedTime DateTime
+  @@map("dataUpdateHistory")
+}
+
+model SystemLog {
+  id       Int      @id @default(autoincrement())
+  level    LogLevel
+  scope    String   @db.VarChar(255)
+  message  String   @db.VarChar(255)
+  details  Json?    // 可選字段，用於存儲額外上下文信息
+  created  DateTime @default(now())
+
+  @@map("systemLog")
+  @@index([level, created])
+}
+
+enum LogLevel {
+  TRACE
+  DEBUG
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+  ALERT
+  EMERGENCY
+}
+
+model EarningPerShares {
+  id          Int      @id @default(autoincrement()) // 自動生成主鍵
+  stockInfoId Int
+  epsActual   Float?    // 實際每股盈餘 (EPS)
+  epsEstimate Float?    // 預估每股盈餘
+  quarter     DateTime // 季度結束日期
+  created     DateTime @default(now()) // 資料建立時間
+  @@map("earningPerShares")
+  @@index([stockInfoId, quarter])
+}
+
+model Financials {
+  id           Int      @id @default(autoincrement()) // 自動生成主鍵
+  stockInfoId  Int
+  totalRevenue Float?    // 營收總額
+  netIncome    Float?    // 淨利潤
+  endDate      DateTime  
+  created      DateTime @default(now()) // 資料建立時間
+  @@map("financials")
+  @@index([stockInfoId, endDate])
 }

@@ -1,6 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import yahooFinance from "yahoo-finance2";
-import { HttpClientService } from "src/modules/core/httpClient/index.service";
+import { HttpClientService } from "src/core/httpClient/index.service";
 import { alphaVantageApiKey } from "src/app.setting";
 
 type YahooFinanceModule = 
@@ -22,9 +22,6 @@ export class StockApi{
             }
         })
     }
-    async getFundamnentals(symbol:string,modules:YahooFinanceModule [] = ['financialData']):Promise<any>{
-        return await yahooFinance.quoteSummary(symbol,{modules})
-    }
 
     async getHistoricalPrices(symbol:string,startDate:Date,endDate:Date){
         return await yahooFinance.chart(symbol,{
@@ -40,7 +37,7 @@ export class StockApi{
 
     async getListedStocks(){
         // const listedStock = await this.httpClient.get(`https://www.alphavantage.co/query?function=LISTING_STATUS&apikey=${alphaVantageApiKey}`)
-        const result = await this.httpClient.get(`https://www.alphavantage.co/query?function=LISTING_STATUS&apikey=DEMO`)
+        const result = await this.httpClient.get(`https://www.alphavantage.co/query?function=LISTING_STATUS&apikey=${alphaVantageApiKey}`)
         let rowDatas = result.split('\r\n')
         rowDatas = rowDatas.slice(0, rowDatas.length - 1)
         const keys = rowDatas[0].split(',')
@@ -52,4 +49,14 @@ export class StockApi{
             return listedStock
         })
     }
+
+    async getFundamnentals(symbol:string,modules:YahooFinanceModule [] = ['financialData']):Promise<any>{
+        return await yahooFinance.quoteSummary(symbol,{modules})
+    }
+    
+
+    async getFundamnentalHistory(){
+        
+    }
+
 }
