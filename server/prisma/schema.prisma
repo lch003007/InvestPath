@@ -104,10 +104,10 @@ model StockPriceHistory {
   date DateTime
   high Float
   volume Int
-  open Int
-  low Int
-  close Int
-  adjclose Int
+  open Float
+  low Float
+  close Float
+  adjclose Float
 
   @@index([stockInfoId,date(SortOrder.desc)])
   @@map("stockPriceHistory")

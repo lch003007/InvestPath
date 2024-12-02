@@ -24,23 +24,6 @@ export class StockTask implements OnModuleInit{
                 break
             await task.callback()
             task.updatedTime = new Date()
-
-            // while(true){
-            //     // await new Promise(resolve => setTimeout(resolve, this.sec));
-            //     const result = await task.callback()
-            //     if(result||executeTimes>=10||this.taskQueue.filter(item=>item.updatedTime!=null).length>=this.taskLimit){
-            //         if(result){
-            //             task.updatedTime = new Date()
-            //             break;
-            //         }
-            //         else{
-            //             console.log(`error 執行超過10次:${task}`)
-            //             break;
-            //         }
-            //     }else{
-            //         executeTimes++
-            //     }
-            // }
         }
     }
     async cleanTasks(){
@@ -55,7 +38,6 @@ export class StockTask implements OnModuleInit{
                 const updatedTime = new Date(item.updatedTime).getTime()
                 return nowTime-updatedTime>=interval
             }))
-            // console.log(intervalData)
         }
     }
     async scheduleTasks(){
@@ -87,6 +69,24 @@ export class StockTask implements OnModuleInit{
         // await this.initStockPriceHistory()
         // await this.scheduleTasks()
         // this.addTask()
+        await this.repository.updateDataUpdateHistory({
+            where:
+            {
+                tableName:'stockPriceHistory',
+            },
+            data:
+            {
+                updatedTime:new Date('2024-11-18')
+            }
+        })
+        const taskInfo = taskInfos[0]
+        const {callbackName,tableName,interval} = taskInfo
+        const intervalData = await this.repository.getDataUpdateHistory({where:{tableName:tableName}})      
+        this[callbackName](intervalData.filter(item=>{
+            const nowTime = new Date().getTime()
+            const updatedTime = new Date(item.updatedTime).getTime()
+            return nowTime-updatedTime>=interval
+        }))
         // const intervalData = await this.repository.getDataUpdateHistory({where:{tableName:'stockPriceHistory'}}) 
         // this.dailyStockPrice(intervalData)
         // this.cleanDataUpdateHistory()
@@ -111,24 +111,30 @@ export class StockTask implements OnModuleInit{
             const updatedTime = new Date(updateInfos.find(item=>item.idValue==stockInfo.id)['updatedTime'])
             if(nowTime.getTime()-updatedTime.getTime()>=day*2){
                 this.taskQueue.push({
-                    callback: () => this.insertStockPriceHistory(stockInfo.symbol, stockInfo.id, updatedTime),
+                    callback: async() => {
+                        let startFetchingDate = new Date(updatedTime);
+                        startFetchingDate.setUTCDate(startFetchingDate.getUTCDate() + 1);
+                        this.insertStockPriceHistory(stockInfo.symbol, stockInfo.id, startFetchingDate)
+                        await this.repository.updateDataUpdateHistory({
+                            where:
+                            {
+                                tableName:'stockPriceHistory',
+                                idValue:stockInfo.id
+                            },
+                            data:
+                            {
+                                updatedTime:new Date()
+                            }
+                        })
+                    },
                     updatedTime: null
                 });
-                await this.repository.updateDataUpdateHistory({
-                    where:
-                    {
-                        tableName:'stockPriceHistory',
-                        idValue:stockInfo.id
-                    },
-                    data:
-                    {
-                        updatedTime:new Date()
-                    }
-                })
+
                 }else{
                     oneDayDataToFetch.push(stockInfo)
                 }
         }
+
         this.taskQueue.push({
             callback:async()=>{
                 const oneDayData = await this.api.getRealTimePrice(oneDayDataToFetch.map(item=>item.symbol))
@@ -159,36 +165,6 @@ export class StockTask implements OnModuleInit{
                 })
             }
         })
-
-        // for(const stockInfo of stockInfos){
-        //     for(const updateInfo of updateInfos){
-        //         const updatedTime = new Date(updateInfo.updatedTime).getTime()
-        //         const stockDataProps = {
-        //             symbol:stockInfo.symbol,
-        //             stockInfoId:stockInfo.stockInfoId,
-        //             startDate:updatedTime
-        //         }
-                
-        //         if(nowTime-updatedTime>=day*2){
-        //             this.taskQueue.push({
-        //                 callback: () => this.insertStockPriceHistory(stockInfo.symbol, stockInfo.id, updateInfo.updatedTime),
-        //                 updatedTime: null
-        //             });
-        //         }else{
-        //             oneDayDataToFetch.push(stockInfo.symbol)
-        //         }
-        //     }
-        // }
-        
-
-        // stockInfos.filter(stockInfo=>{
-        //     return updateInfos.filter(updateInfo=>{
-        //         const updatedTime = new Date(updateInfo.updatedTime).getTime()
-        //         return nowTime
-        //     })
-        // })
-        // const oneDayDataToFetch = 
-
     }
     async initData(){
         await this.initStockInfo() 

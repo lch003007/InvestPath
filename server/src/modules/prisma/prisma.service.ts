@@ -24,7 +24,8 @@ export class PrismaService extends PrismaClient implements OnModuleInit,OnModule
                 props.map(item => (this[tableName][method] as Function)(item))
             );
         } else {
-            return (this[tableName][method] as Function)(props);
+            const a = await (this[tableName][method] as Function)(props)
+            return a;
         }
     }
 

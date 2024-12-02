@@ -8,17 +8,21 @@ export class StockService{
     async getStockPrice(symbol:string,date:Date,days:number,type:string='close'){
         const stockInfo = await this.repository.getStockInfos({where:{
             symbol:symbol,
-        }})[0]['id']
+        }})
 
         const stockInfoId = stockInfo[0]['id']
-
+        
         const stockPrice = await this.repository.getStockPriceHistory({where:{
             stockInfoId:stockInfoId,
             date:{
                 lte:date
             },
         },
-    take:days})
+            take:days,
+            distinct:'date',
+            orderBy:{date:'desc'}
+})
+        console.log(stockPrice)
         return stockPrice.map(item=>item[type])
     }
 
