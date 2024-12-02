@@ -54,6 +54,7 @@ export class StockTask implements OnModuleInit{
         // await this.testApi()
         await this.initData()
         await this.scheduleTasks()
+        
     }
 
     chunkArray(array:any[], chunkSize:number){
@@ -69,24 +70,26 @@ export class StockTask implements OnModuleInit{
         // await this.initStockPriceHistory()
         // await this.scheduleTasks()
         // this.addTask()
-        await this.repository.updateDataUpdateHistory({
-            where:
-            {
-                tableName:'stockPriceHistory',
-            },
-            data:
-            {
-                updatedTime:new Date('2024-11-18')
-            }
-        })
-        const taskInfo = taskInfos[0]
-        const {callbackName,tableName,interval} = taskInfo
-        const intervalData = await this.repository.getDataUpdateHistory({where:{tableName:tableName}})      
-        this[callbackName](intervalData.filter(item=>{
-            const nowTime = new Date().getTime()
-            const updatedTime = new Date(item.updatedTime).getTime()
-            return nowTime-updatedTime>=interval
-        }))
+        const apple = await this.repository.getStockInfos({where:{symbol:'AAPL'}});
+        console.log(apple)
+        // await this.repository.updateDataUpdateHistory({
+        //     where:
+        //     {
+        //         tableName:'stockPriceHistory',
+        //     },
+        //     data:
+        //     {
+        //         updatedTime:new Date('2024-11-18')
+        //     }
+        // })
+        // const taskInfo = taskInfos[0]
+        // const {callbackName,tableName,interval} = taskInfo
+        // const intervalData = await this.repository.getDataUpdateHistory({where:{tableName:tableName}})      
+        // this[callbackName](intervalData.filter(item=>{
+        //     const nowTime = new Date().getTime()
+        //     const updatedTime = new Date(item.updatedTime).getTime()
+        //     return nowTime-updatedTime>=interval
+        // }))
         // const intervalData = await this.repository.getDataUpdateHistory({where:{tableName:'stockPriceHistory'}}) 
         // this.dailyStockPrice(intervalData)
         // this.cleanDataUpdateHistory()
@@ -273,12 +276,10 @@ export class StockTask implements OnModuleInit{
     async initStockPriceHistory(){//ok
         const stockInfos = await this.repository.getStockInfos({where:{yahooApi:true}})
         const stockInfoIds = stockInfos.map(stockInfo => stockInfo.id);
-
         const stockPriceHistories = await this.repository.getStockPriceHistory({
-            where: { stockInfoId: { in: stockInfoIds } },
+            where: { stockInfoId: { in: stockInfoIds },date:{not:undefined} },
             distinct: ['stockInfoId'],
         });
-        
         const existingStockInfoIds = new Set(stockPriceHistories.map(item => item.stockInfoId));
         for(const stockInfo of stockInfos){
             if (!existingStockInfoIds.has(stockInfo.id)) {
