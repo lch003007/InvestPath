@@ -1,3 +1,5 @@
+all:install migrate seeder
+
 install:
 	cd server && npm install
 	cd web && npm install
@@ -8,4 +10,3 @@ migrate:
 seeder:
 	cd server && npm run seeder
 
-all:install migrate seeder

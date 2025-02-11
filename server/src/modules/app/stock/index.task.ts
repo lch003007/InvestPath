@@ -33,7 +33,7 @@ export class StockTask implements OnModuleInit{
         for(const taskInfo of taskInfos){
             const {callbackName,tableName,interval} = taskInfo
             const intervalData = await this.repository.getDataUpdateHistory({where:{tableName:tableName}})      
-            this[callbackName](intervalData.filter(item=>{
+            await this[callbackName](intervalData.filter(item=>{
                 const nowTime = new Date().getTime()
                 const updatedTime = new Date(item.updatedTime).getTime()
                 return nowTime-updatedTime>=interval
@@ -52,8 +52,11 @@ export class StockTask implements OnModuleInit{
     
     async onModuleInit() {
         // await this.testApi()
-        await this.initData()
-        await this.scheduleTasks()
+        // await this.initData()
+        // await this.scheduleTasks()
+        const result = await this.api.getFundamentals('aapl')
+        // console.log(result?.earningsHistory?.history)
+        console.log(result?.incomeStatementHistory?.incomeStatementHistory)
         
     }
 
@@ -69,9 +72,9 @@ export class StockTask implements OnModuleInit{
         // await this.updateStockInfo()
         // await this.initStockPriceHistory()
         // await this.scheduleTasks()
-        // this.addTask()
-        const apple = await this.repository.getStockInfos({where:{symbol:'AAPL'}});
-        console.log(apple)
+        await this.addTask()
+        // const apple = await this.repository.getStockInfos({where:{symbol:'AAPL'}});
+        // console.log(apple)
         // await this.repository.updateDataUpdateHistory({
         //     where:
         //     {
@@ -95,6 +98,7 @@ export class StockTask implements OnModuleInit{
         // this.cleanDataUpdateHistory()
     }
     async dailyStockPrice(updateInfos:any[]){
+
         const stockInfos = await this.repository.getStockInfos({
             select:{
                 id:true,
@@ -137,37 +141,41 @@ export class StockTask implements OnModuleInit{
                     oneDayDataToFetch.push(stockInfo)
                 }
         }
-
-        this.taskQueue.push({
-            callback:async()=>{
-                const oneDayData = await this.api.getRealTimePrice(oneDayDataToFetch.map(item=>item.symbol))
-                await this.repository.insertStockPriceHistory(oneDayData.map(item=>{
-                    return {
-                        high:item.regularMarketDayHigh,
-                        volume:item.regularMarketVolume,
-                        open:item.regularMarketOpen,
-                        low:item.regularMarketDayLow,
-                        close:item.regularMarketPrice,
-                        adjclose:item.regularMarketPrice,
-                        date:item.regularMarketTime,
-                        stockInfoId:oneDayDataToFetch.find(findItem=>findItem.symbol==item.symbol)['id']
-                    }
-                }))
-                await this.repository.updateDataUpdateHistory({
-                    where:
-                    {
-                        tableName:'stockPriceHistory',
-                        idValue:{
-                            in:oneDayDataToFetch.map(item=>item.id)
+        const chunkedSymbols = this.chunkArray(oneDayDataToFetch,this.maxCmdAmount)
+        for(const symbols of chunkedSymbols){
+            this.taskQueue.push({
+                callback:async()=>{
+                    const oneDayData = await this.api.getRealTimePrice(symbols.map(item=>item.symbol))
+                    
+                    await this.repository.insertStockPriceHistory(oneDayData.map(item=>{
+                        return {
+                            high:item.regularMarketDayHigh,
+                            volume:item.regularMarketVolume,
+                            open:item.regularMarketOpen,
+                            low:item.regularMarketDayLow,
+                            close:item.regularMarketPrice,
+                            adjclose:item.regularMarketPrice,
+                            date:new Date(item.regularMarketTime),
+                            stockInfoId:symbols.find(findItem=>findItem.symbol==item.symbol)['id']
                         }
-                    },
-                    data:
-                    {
-                        updatedTime:new Date()
-                    }
-                })
-            }
-        })
+                    }))
+                    await this.repository.updateDataUpdateHistory({
+                        where:
+                        {
+                            tableName:'stockPriceHistory',
+                            idValue:{
+                                in:symbols.map(item=>item.id)
+                            }
+                        },
+                        data:
+                        {
+                            updatedTime:new Date()
+                        }
+                    })
+                    this.logger.info(`update daily stock price successful!`)
+                }
+            })
+        }
     }
     async initData(){
         await this.initStockInfo() 
@@ -325,13 +333,14 @@ export class StockTask implements OnModuleInit{
     async updateFundamental(){
         const stockInfos = await this.repository.getStockInfos()
     }
+
     async cleanDataUpdateHistory(){
         const repeatId = []
         const notExistingId = []
         const dataUpdateHistory = await this.repository.getDataUpdateHistory()
         const stockInfos = await this.repository.getStockInfos()
         const checkRepeatData = {}
-        const test = {}
+
         dataUpdateHistory.map(item=>{
             if(!stockInfos.find(stockInfo=>stockInfo.id==item.idValue))
                 notExistingId.push(item.id)
@@ -339,11 +348,16 @@ export class StockTask implements OnModuleInit{
                 checkRepeatData[item.tableName] = {}
             if(!checkRepeatData[item.tableName][item.idValue])
                 checkRepeatData[item.tableName][item.idValue] = true
+
             else
                 repeatId.push(item.id)
         })
         const deleteId = repeatId.concat(notExistingId)
-        this.logger.info(`clean Data${deleteId}`)
+        for(const id of deleteId){
+            await this.logger.info(`clean DataUpdateHistory: ${id} `)
+        }
+        
+
         this.repository.deleteDataUpdateHistory({where:{id:{in:deleteId}}})
     }
 }

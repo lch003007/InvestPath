@@ -1,6 +1,18 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaClient } from "@prisma/client";
-import { PrismaService,StockInfoFindManyArgs,StockPriceHistoryFindManyArgs,StockInfoUpdateManyArgs,dataUpdateHistoryFindManyArgs,dataUpdateHistoryUpdateManyArgs, StockInfoCreateManyData, StockPriceHistoryCreateManyData, dataUpdateHistoryCreateManyData, dataUpdateHistoryDeleteManyArgs } from "src/modules/prisma/prisma.service";
+import { PrismaService,
+    StockInfoFindManyArgs,
+    StockPriceHistoryFindManyArgs,
+    StockInfoUpdateManyArgs,
+    dataUpdateHistoryFindManyArgs,
+    dataUpdateHistoryUpdateManyArgs, 
+    StockInfoCreateManyData, 
+    StockPriceHistoryCreateManyData, 
+    dataUpdateHistoryCreateManyData, 
+    dataUpdateHistoryDeleteManyArgs, 
+    EarningPerSharesFindManyArgs,
+    FinancialsFindManyArgs
+} from "src/modules/prisma/prisma.service";
 
 
 @Injectable()
@@ -40,6 +52,14 @@ export class StockRepository{
 
     async deleteDataUpdateHistory(props:dataUpdateHistoryDeleteManyArgs){
         return this.prisma.executeOperation(props,'dataUpdateHistory','deleteMany')
+    }
+
+    async getEPS(props:EarningPerSharesFindManyArgs){
+        return this.prisma.executeOperation(props,'earningPerShares','findMany')
+    }
+
+    async getNetIncome(props:FinancialsFindManyArgs){
+        return this.prisma.executeOperation(props,'financials','findMany')
     }
 }
 // @Injectable()

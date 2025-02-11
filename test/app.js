@@ -34,7 +34,7 @@ async function getHistoricalPrices(symbol,startDate,endDate){
 
   
 }
-
+getHistoricalPrices('AKUS',new Date('1000-11-11'),new Date())
 async function getRealTimePrice(symbol){
   const result = await yahooFinance.quote(symbol)
   console.log(result)
@@ -44,4 +44,4 @@ async function getRealTimePrice(symbol){
 
 // getRealTimePrice(['AAPL','MSFT'])
 // getHistoricalPrices('CCTSW',new Date('2024-09-18'),new Date())
-getHistoricalFundamentals('IBM')
+// getHistoricalFundamentals('IBM')

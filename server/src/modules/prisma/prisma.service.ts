@@ -47,3 +47,7 @@ export type dataUpdateHistoryUpdateManyArgs = Prisma.DataUpdateHistoryUpdateMany
 export type dataUpdateHistoryDeleteManyArgs = Prisma.DataUpdateHistoryDeleteManyArgs
 
 export type SystemLogCreateManyData = Prisma.SystemLogCreateInput[]
+
+export type FinancialsFindManyArgs = Prisma.FinancialsFindManyArgs
+
+export type EarningPerSharesFindManyArgs = Prisma.EarningPerSharesFindManyArgs

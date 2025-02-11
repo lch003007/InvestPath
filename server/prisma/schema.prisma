@@ -102,12 +102,12 @@ model StockPriceHistory {
   id Int @id @default(autoincrement())
   stockInfoId Int
   date DateTime
-  high Float
-  volume BigInt
-  open Float
-  low Float
-  close Float
-  adjclose Float
+  high Float?
+  volume BigInt?
+  open Float?
+  low Float?
+  close Float?
+  adjclose Float?
 
   @@index([stockInfoId,date(SortOrder.desc)])
   @@index([stockInfoId])
@@ -155,6 +155,8 @@ model EarningPerShares {
   created     DateTime @default(now()) // 資料建立時間
   @@map("earningPerShares")
   @@index([stockInfoId, quarter])
+  @@index([stockInfoId])
+  @@index([quarter])
 }
 
 model Financials {
@@ -166,4 +168,35 @@ model Financials {
   created      DateTime @default(now()) // 資料建立時間
   @@map("financials")
   @@index([stockInfoId, endDate])
+  @@index([stockInfoId])
+  @@index([endDate])
+}
+
+
+
+enum CapitalType {
+  DEPOSIT  // 入金
+  WITHDRAW // 出金
+}
+
+model CapitalFlow {
+  id        Int          @id @default(autoincrement())
+  type      CapitalType  // 資金類型
+  amount    Float
+  date      DateTime     @default(now())
+  note      String? @db.VarChar(255)
+}
+
+enum TradeType {
+  BUY
+  SELL
+}
+
+model Portfolio {
+  id         Int        @id @default(autoincrement())
+  type       TradeType
+  stockInfoId  Int
+  price      Float
+  quantity   Int
+  date       DateTime   @default(now())
 }
